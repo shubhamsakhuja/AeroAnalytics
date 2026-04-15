@@ -1,0 +1,37 @@
+# ── NEVER commit these ────────────────────────────────
+.env
+*.env
+
+# ── Python ───────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
+
+# ── AWS ──────────────────────────────────────────────
+.elasticbeanstalk/
+*.zip
+
+# ── Database (large file — regenerate with airline_db_generator.py)
+airline_dummy.db
+
+# ── Generated reports ─────────────────────────────────
+/tmp/*.pdf
+
+# ── OS ───────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── IDE ──────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+
+# ── Debug/test scripts ────────────────────────────────
+debug_bedrock.py
+test.py

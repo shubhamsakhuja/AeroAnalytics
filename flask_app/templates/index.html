@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroAnalytics — AI Data Analyst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+/* ── RESET & BASE ───────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f9f9f7;
+  --surface:#ffffff;
+  --sidebar:#f0eeeb;
+  --border:#e0ddd8;
+  --border2:#d9d6cf;
+  --text:#1a1a1a;
+  --text2:#4a4a4a;
+  --text3:#888;
+  --text4:#a09d97;
+  --accent:#c96442;
+  --accent-light:#fff0ed;
+  --accent-border:#f5c6b8;
+  --green:#2d8a5e;
+  --green-light:#f0faf5;
+  --green-border:#b2dfcc;
+  --shadow:0 1px 4px rgba(0,0,0,.06);
+  --shadow2:0 2px 12px rgba(0,0,0,.08);
+  --radius:10px;
+  --radius2:14px;
+}
+html,body{height:100%;background:var(--bg);font-family:'Inter',sans-serif;color:var(--text);font-size:14px;line-height:1.6;}
+
+/* ── LAYOUT ─────────────────────────────────────────── */
+.app{display:flex;height:100vh;overflow:hidden;}
+
+/* ── SIDEBAR ─────────────────────────────────────────── */
+.sidebar{
+  width:260px;flex-shrink:0;
+  background:var(--sidebar);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  overflow-y:auto;padding:0;
+}
+.sidebar-logo{
+  padding:18px 18px 16px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sidebar-logo-icon{font-size:20px;}
+.sidebar-logo-name{font-size:15px;font-weight:700;color:var(--text);}
+.sidebar-logo-sub{font-size:11px;color:var(--text4);margin-top:1px;}
+.sidebar-body{padding:16px;flex:1;display:flex;flex-direction:column;gap:0;}
+
+.slabel{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text4);margin:16px 0 8px;display:block;}
+.slabel:first-child{margin-top:0;}
+
+/* Sidebar select */
+.s-select{
+  width:100%;padding:9px 12px;
+  background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);
+  color:var(--text);font-size:13px;font-family:'Inter',sans-serif;
+  cursor:pointer;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;
+}
+.s-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(201,100,66,.1);}
+
+/* Pill status */
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:4px 12px;font-size:11px;font-weight:500;margin-top:6px;}
+.pill-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+.pill-yellow{background:#fffbeb;color:#b7791f;border:1px solid #f6d860;}
+.pill-dot{width:6px;height:6px;border-radius:50%;display:inline-block;}
+.pill-green .pill-dot{background:var(--green);}
+.pill-yellow .pill-dot{background:#d69e2e;}
+
+/* Info box */
+.info-box{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:11px;margin-top:8px;}
+.info-box-label{color:var(--text4);font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px;display:block;}
+.info-box-val{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8;}
+
+/* Sidebar input */
+.s-input{width:100%;padding:9px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;}
+.s-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(201,100,66,.1);}
+.s-input::placeholder{color:var(--text4);}
+
+/* File upload area */
+.upload-area{
+  border:2px dashed var(--border2);border-radius:var(--radius);
+  padding:18px;text-align:center;cursor:pointer;
+  transition:all .2s;margin-top:8px;background:var(--surface);
+}
+.upload-area:hover,.upload-area.drag-over{border-color:var(--accent);background:var(--accent-light);}
+.upload-area input{display:none;}
+.upload-icon{font-size:22px;margin-bottom:6px;color:var(--text4);}
+.upload-text{font-size:12px;color:var(--text3);}
+.upload-hint{font-size:11px;color:var(--text4);margin-top:3px;}
+.upload-success{background:var(--green-light);border:1px solid var(--green-border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--green);margin-top:8px;font-weight:500;}
+
+/* Sidebar buttons */
+.s-btn{
+  width:100%;padding:9px 14px;border-radius:var(--radius);font-size:13px;
+  font-family:'Inter',sans-serif;font-weight:500;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  transition:all .15s;text-align:left;
+}
+.s-btn:hover{background:var(--bg);border-color:var(--accent);color:var(--accent);}
+.s-btn-exit{background:var(--accent-light);color:var(--accent);border-color:var(--accent-border);font-weight:600;}
+.s-btn-exit:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+.s-btn-clear{margin-top:8px;}
+
+.sidebar-footer{padding:14px 16px;border-top:1px solid var(--border);font-size:10px;color:#c8c5bf;text-align:center;line-height:1.6;}
+
+/* ── MAIN AREA ───────────────────────────────────────── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+
+/* ── HEADER ──────────────────────────────────────────── */
+.header{
+  padding:14px 24px;
+  display:flex;align-items:center;gap:14px;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.header-icon{
+  width:40px;height:40px;border-radius:10px;
+  background:linear-gradient(135deg,#c96442,#e8845e);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.header-title{font-size:17px;font-weight:700;color:var(--text);}
+.header-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.header-badges{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.badge{border-radius:20px;padding:5px 12px;font-size:11px;font-weight:600;white-space:nowrap;}
+.badge-orange{background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-border);}
+.badge-green{background:var(--green-light);color:var(--green);border:1px solid var(--green-border);}
+.header-exit{
+  padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;
+  background:var(--accent-light);color:var(--accent);border:1px solid var(--accent-border);
+  cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;margin-left:8px;
+}
+.header-exit:hover{background:var(--accent);color:#fff;}
+
+/* ── BODY SPLIT ──────────────────────────────────────── */
+.body{flex:1;display:flex;overflow:hidden;}
+.chat-panel,.results-panel{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:20px 24px;}
+.chat-panel{border-right:1px solid var(--border);}
+
+.panel-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text4);margin-bottom:14px;flex-shrink:0;}
+
+/* ── SUGGESTIONS ─────────────────────────────────────── */
+.suggestions-intro{font-size:13px;color:var(--text3);margin-bottom:12px;}
+.suggestions-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;}
+.sug-chip{
+  padding:11px 14px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--surface);
+  color:var(--text2);font-size:12px;font-family:'Inter',sans-serif;
+  cursor:pointer;transition:all .15s;text-align:left;line-height:1.4;
+  box-shadow:var(--shadow);
+}
+.sug-chip:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+
+/* ── CHAT MESSAGES ───────────────────────────────────── */
+.messages{flex:1;overflow-y:auto;padding-right:4px;}
+
+.msg-user{display:flex;justify-content:flex-end;margin:12px 0;}
+.msg-user-bubble{
+  background:var(--accent);color:#fff;
+  border-radius:18px 18px 4px 18px;
+  padding:11px 16px;max-width:80%;
+  font-size:14px;line-height:1.6;
+  box-shadow:0 2px 8px rgba(201,100,66,.2);
+}
+.msg-ai{margin:8px 0 16px;}
+.sql-block{
+  background:#faf6f2;border:1px solid #e8e0d8;
+  border-left:3px solid var(--accent);
+  color:#7a3b10;font-family:'JetBrains Mono',monospace;
+  font-size:12px;line-height:1.7;padding:12px 16px;
+  border-radius:0 10px 10px 0;margin:8px 0;
+  white-space:pre-wrap;overflow-x:auto;
+}
+.insight-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-left:3px solid var(--green);
+  border-radius:0 12px 12px 0;
+  padding:14px 18px;margin:8px 0;
+  font-size:14px;line-height:1.8;color:var(--text);
+  box-shadow:var(--shadow);
+}
+.insight-card strong,.insight-card b{color:var(--green);font-weight:600;}
+.error-card{
+  background:#fff5f5;border:1px solid #f5c6c6;
+  border-left:3px solid #e53e3e;
+  border-radius:0 10px 10px 0;
+  padding:11px 14px;margin:8px 0;
+  font-size:13px;color:#c53030;
+}
+.pii-card{
+  background:#fffbeb;border:1px solid #fcd34d;
+  border-left:3px solid #d97706;
+  border-radius:0 10px 10px 0;
+  padding:14px 18px;margin:8px 0;
+  font-size:13px !important;color:#92400e !important;
+  line-height:1.7 !important;
+}
+.pii-card *{color:#92400e !important;}
+.pii-card strong{color:#b45309 !important;font-weight:700 !important;}
+.thinking{display:flex;align-items:center;gap:10px;color:var(--text4);font-size:13px;margin:12px 0;}
+.thinking-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);animation:bounce .9s infinite;margin:0 2px;}
+.thinking-dots span:nth-child(2){animation-delay:.15s;}
+.thinking-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-5px)}}
+
+/* ── CHAT INPUT ──────────────────────────────────────── */
+.chat-input-wrap{
+  display:flex;align-items:flex-end;gap:10px;margin-top:12px;flex-shrink:0;
+  background:var(--surface);border:1.5px solid var(--border2);border-radius:14px;
+  padding:8px 8px 8px 16px;box-shadow:var(--shadow);
+  transition:border-color .2s;
+}
+.chat-input-wrap:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(201,100,66,.1);}
+.chat-input{
+  flex:1;border:none;outline:none;resize:none;
+  font-family:'Inter',sans-serif;font-size:14px;color:var(--text);
+  background:transparent;line-height:1.5;max-height:120px;min-height:24px;
+}
+.chat-input::placeholder{color:var(--text4);}
+.send-btn{
+  width:36px;height:36px;border-radius:10px;border:none;flex-shrink:0;
+  background:var(--accent);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .15s;font-size:16px;
+}
+.send-btn:hover{background:#b5552f;}
+.send-btn:disabled{background:var(--border2);cursor:not-allowed;}
+
+/* ── RESULTS PANEL ───────────────────────────────────── */
+.results-panel{gap:0;}
+.stats-row{display:grid;grid-template-columns:80px 80px 1fr;gap:10px;margin-bottom:14px;flex-shrink:0;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;text-align:center;box-shadow:var(--shadow);}
+.stat-num{font-size:20px;font-weight:700;color:var(--accent);line-height:1.2;}
+.stat-lbl{font-size:10px;color:var(--text4);margin-top:2px;text-transform:uppercase;letter-spacing:.05em;}
+.stat-cols-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;box-shadow:var(--shadow);display:flex;flex-direction:column;justify-content:center;}
+.stat-cols-lbl{font-size:10px;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;}
+.stat-cols-val{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* Tabs */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;flex-shrink:0;}
+.tab{padding:9px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--text2);}
+.tab-panel{display:none;flex:1;overflow:auto;}
+.tab-panel.active{display:flex;flex-direction:column;}
+
+/* Chart */
+.chart-wrap{flex:1;position:relative;min-height:0;}
+.chart-type-row{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.chart-type-btn{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text2);transition:all .15s;font-family:'Inter',sans-serif;}
+.chart-type-btn.active,.chart-type-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+
+/* Table */
+.table-wrap{overflow:auto;flex:1;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{background:var(--sidebar);color:var(--text);font-weight:600;font-size:12px;padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;position:sticky;top:0;white-space:nowrap;}
+tbody tr:hover td{background:#faf9f7;}
+tbody td{padding:8px 12px;border-bottom:1px solid #f5f4f2;color:var(--text2);white-space:nowrap;}
+
+/* Export */
+.export-btns{display:flex;flex-direction:column;gap:10px;padding-top:4px;}
+.export-btn{
+  display:flex;align-items:center;gap:12px;
+  padding:14px 16px;border-radius:var(--radius);
+  border:1px solid var(--border);background:var(--surface);
+  cursor:pointer;font-size:13px;color:var(--text);
+  transition:all .15s;font-family:'Inter',sans-serif;text-decoration:none;
+}
+.export-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent);}
+.export-btn-icon{font-size:20px;}
+.export-btn-label{font-weight:500;}
+.export-btn-sub{font-size:11px;color:var(--text4);margin-top:1px;}
+
+/* Empty state */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:10px;color:var(--text4);}
+.empty-icon{font-size:32px;opacity:.3;}
+.empty-title{font-size:15px;font-weight:600;color:var(--text4);}
+.empty-sub{font-size:13px;color:#c8c5bf;max-width:200px;text-align:center;line-height:1.5;}
+
+/* Top N selector buttons */
+.topn-btn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text3);
+  transition: all .15s;
+  font-family: 'Inter', sans-serif;
+  min-width: 32px;
+}
+.topn-btn:hover { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
+.topn-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── SIDEBAR ──────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="sidebar-logo-icon">✈</span>
+      <div>
+        <div class="sidebar-logo-name">AeroAnalytics</div>
+      </div>
+    </div>
+
+    <div class="sidebar-body">
+
+      <!-- LLM Provider -->
+      <span class="slabel">LLM Provider</span>
+      <select class="s-select" id="providerSel">
+        <option value="bedrock">AWS Bedrock (Claude)</option>
+        <option value="azure">Azure OpenAI (GPT-4o)</option>
+      </select>
+      <div class="pill pill-green" style="margin-top:8px;">
+        <span class="pill-dot"></span> Credentials loaded from .env
+      </div>
+      <div class="info-box">
+        <span class="info-box-label">Auto-loaded from .env</span>
+        <div class="info-box-val" id="envInfo">Loading...</div>
+      </div>
+
+      <!-- Data Source -->
+      <span class="slabel">Data Source</span>
+      <select class="s-select" id="sourceSel" onchange="onSourceChange()">
+        <option value="airline_demo">Airline Demo DB</option>
+        <option value="upload">Upload File (CSV/Excel/JSON)</option>
+        <option value="sqlite">SQLite File</option>
+        <option value="postgres">PostgreSQL</option>
+        <option value="mysql">MySQL</option>
+      </select>
+
+      <!-- Source panels -->
+      <div id="srcAirline" class="src-panel" style="margin-top:8px;">
+        <div class="info-box">
+          <div style="color:var(--green);font-weight:600;font-size:12px;margin-bottom:4px;">✈ Airline Intelligence DB</div>
+          <div style="color:var(--text3);font-size:11px;line-height:1.6;">17 tables · 44,657 rows<br>Flights · Bookings · Crew · Finance</div>
+        </div>
+        <input class="s-input" style="margin-top:8px;" id="dbPath" value="airline_dummy.db" placeholder="Path to airline_dummy.db">
+        <button class="s-btn" style="margin-top:8px;" onclick="connectAirline()">Connect</button>
+      </div>
+
+      <div id="srcUpload" class="src-panel" style="display:none;margin-top:8px;">
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="dropFile(event)">
+          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls,.json" onchange="uploadFile(this.files[0])">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">Click or drag & drop</div>
+          <div class="upload-hint">CSV, Excel, JSON</div>
+        </div>
+        <div id="uploadStatus" style="display:none;" class="upload-success"></div>
+      </div>
+
+      <div id="srcSqlite" class="src-panel" style="display:none;margin-top:8px;">
+        <div class="upload-area" onclick="document.getElementById('sqliteInput').click()">
+          <input type="file" id="sqliteInput" accept=".db,.sqlite,.sqlite3" onchange="uploadFile(this.files[0], true)">
+          <div class="upload-icon">🗄️</div>
+          <div class="upload-text">Upload SQLite .db file</div>
+        </div>
+      </div>
+
+      <div id="srcDb" class="src-panel" style="display:none;margin-top:8px;">
+        <input class="s-input" id="dbHost" placeholder="Host (localhost)" style="margin-bottom:6px;">
+        <input class="s-input" id="dbPort" placeholder="Port (5432)" style="margin-bottom:6px;">
+        <input class="s-input" id="dbName" placeholder="Database name" style="margin-bottom:6px;">
+        <input class="s-input" id="dbUser" placeholder="Username" style="margin-bottom:6px;">
+        <input class="s-input" id="dbPass" placeholder="Password" type="password" style="margin-bottom:8px;">
+        <button class="s-btn" onclick="connectDb()">Connect</button>
+      </div>
+
+      <div style="flex:1;"></div>
+
+      <button class="s-btn s-btn-clear" onclick="clearChat()">Clear conversation</button>
+    </div>
+
+    <div class="sidebar-footer">AeroAnalytics v1.0</div>
+  </aside>
+
+  <!-- ── MAIN ──────────────────────────────────────────── -->
+  <div class="main">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-icon">✈</div>
+      <div>
+        <div class="header-title">AI Data Analyst</div>
+        <div class="header-sub">Airline Intelligence · Claude on AWS Bedrock</div>
+      </div>
+      <div class="header-badges">
+        <span class="badge badge-orange">Text → SQL → Insight</span>
+        <span class="badge badge-green">● Live</span>
+        {% if is_prod %}
+        <a href="/logout" style="padding:7px 14px;border-radius:8px;font-size:12px;
+           font-weight:600;background:#fff0ed;color:#c96442;border:1px solid #f5c6b8;
+           text-decoration:none;white-space:nowrap;font-family:'Inter',sans-serif;">
+          Sign out · {{ username }}
+        </a>
+        {% endif %}
+        <button class="header-exit" onclick="exitApp()">Stop &amp; Exit</button>
+      </div>
+    </header>
+
+    <!-- Body: Chat + Results -->
+    <div class="body">
+
+      <!-- Chat Panel -->
+      <div class="chat-panel">
+        <div class="panel-label">Intelligence Chat</div>
+
+        <!-- Suggestions -->
+        <div id="suggestionsArea">
+          <div class="suggestions-intro">Try one of these or type your own question:</div>
+          <div class="suggestions-grid" id="sugGrid"></div>
+        </div>
+
+        <!-- Messages -->
+        <div class="messages" id="messages"></div>
+
+        <!-- Input -->
+        <div class="chat-input-wrap">
+          <textarea class="chat-input" id="chatInput" rows="1"
+            placeholder="Ask anything about your airline data..."
+            onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="send-btn" id="sendBtn" onclick="sendMessage()">↑</button>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="results-panel">
+        <div class="panel-label">Results &amp; Analytics</div>
+
+        <div id="resultsEmpty" class="empty">
+          <div class="empty-icon">✈</div>
+          <div class="empty-title">No data yet</div>
+          <div class="empty-sub">Ask a question to see your chart and table here</div>
+        </div>
+
+        <div id="resultsContent" style="display:none;flex:1;display:none;flex-direction:column;overflow:hidden;">
+          <!-- Stats -->
+          <div class="stats-row" id="statsRow"></div>
+
+          <!-- Tabs -->
+          <div class="tabs">
+            <div class="tab active" onclick="switchTab('chart',this)">Chart</div>
+            <div class="tab" onclick="switchTab('table',this)">Table</div>
+            <div class="tab" onclick="switchTab('export',this)">Export</div>
+          </div>
+
+          <!-- Chart tab -->
+          <div class="tab-panel active" id="tabChart">
+            <!-- Chart type + Top N controls in one row -->
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <div class="chart-type-row" id="chartTypeRow" style="margin-bottom:0;">
+                <button class="chart-type-btn active" onclick="setChart('bar',this)">Bar</button>
+                <button class="chart-type-btn" onclick="setChart('line',this)">Line</button>
+                <button class="chart-type-btn" onclick="setChart('pie',this)">Pie</button>
+                <button class="chart-type-btn" onclick="setChart('doughnut',this)">Doughnut</button>
+              </div>
+              <!-- Top N selector — only shown when data has more rows than min limit -->
+              <div id="topNWrap" style="display:none;align-items:center;gap:8px;">
+                <span style="font-size:11px;color:#a09d97;font-weight:600;letter-spacing:.04em;white-space:nowrap;">SHOW TOP</span>
+                <div style="display:flex;gap:4px;" id="topNBtns">
+                  <button class="topn-btn" onclick="setTopN(5,this)">5</button>
+                  <button class="topn-btn" onclick="setTopN(10,this)">10</button>
+                  <button class="topn-btn active" onclick="setTopN(15,this)">15</button>
+                  <button class="topn-btn" onclick="setTopN(20,this)">20</button>
+                  <button class="topn-btn" onclick="setTopN(50,this)">50</button>
+                  <button class="topn-btn" onclick="setTopN(9999,this)">All</button>
+                </div>
+              </div>
+            </div>
+            <div id="chartNote" style="display:none;font-size:11px;color:#a09d97;margin-bottom:8px;padding:6px 10px;background:#faf9f7;border-radius:6px;border:1px solid #e0ddd8;"></div>
+            <div class="chart-wrap">
+              <canvas id="myChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Table tab -->
+          <div class="tab-panel" id="tabTable">
+            <div class="table-wrap"><table id="dataTable"></table></div>
+          </div>
+
+          <!-- Export tab -->
+          <div class="tab-panel" id="tabExport">
+            <div class="export-btns">
+              <button class="export-btn" onclick="downloadCSV()">
+                <span class="export-btn-icon">📊</span>
+                <div><div class="export-btn-label">Download CSV</div><div class="export-btn-sub">All rows as comma-separated file</div></div>
+              </button>
+              <button class="export-btn" onclick="downloadPDF()">
+                <span class="export-btn-icon">📄</span>
+                <div><div class="export-btn-label">Download PDF Report</div><div class="export-btn-sub">Branded report with SQL, insight and data</div></div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DATA ────────────────────────────────────────────────
+const SUGGESTIONS = [
+  "Which airline has the best on-time performance?",
+  "Show total revenue by cabin class",
+  "Top 5 delay reasons this year",
+  "Compare fuel costs by airline in 2024",
+  "Which route has the most cancellations?",
+  "Average customer rating by airline",
+  "Top 10 busiest airports by flight count",
+  "Show monthly passenger trend for Emirates",
+];
+
+let chartInstance = null;
+let currentData   = null;
+let currentType   = "bar";
+let currentTopN   = 15; // default top N
+
+// ── INIT ────────────────────────────────────────────────
+window.onload = () => {
+  renderSuggestions();
+  loadEnvInfo();
+  connectAirline();
+};
+
+function renderSuggestions() {
+  const grid = document.getElementById("sugGrid");
+  grid.innerHTML = SUGGESTIONS.map((s,i) =>
+    `<button class="sug-chip" onclick="askQuestion('${s.replace(/'/g,"\\'")}')">${s}</button>`
+  ).join("");
+}
+
+async function loadEnvInfo() {
+  // Just show what's in the page — no extra endpoint needed
+  document.getElementById("envInfo").innerHTML =
+    "Region: ap-southeast-2<br>Model: au.anthropic.claude-haiku-4-5";
+}
+
+// ── SOURCE SWITCHING ────────────────────────────────────
+function onSourceChange() {
+  const val = document.getElementById("sourceSel").value;
+  document.querySelectorAll(".src-panel").forEach(p => p.style.display = "none");
+  const map = {airline_demo:"srcAirline",upload:"srcUpload",sqlite:"srcSqlite",postgres:"srcDb",mysql:"srcDb"};
+  const el = document.getElementById(map[val]);
+  if (el) el.style.display = "block";
+}
+
+async function connectAirline() {
+  const path = document.getElementById("dbPath").value || "airline_dummy.db";
+  await fetch("/api/connect", {method:"POST",headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({type:"airline_demo", db_path: path})});
+}
+
+async function connectDb() {
+  const type = document.getElementById("sourceSel").value;
+  const body = {
+    type, host: document.getElementById("dbHost").value,
+    port: parseInt(document.getElementById("dbPort").value)||5432,
+    database: document.getElementById("dbName").value,
+    username: document.getElementById("dbUser").value,
+    password: document.getElementById("dbPass").value,
+  };
+  const r = await fetch("/api/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d = await r.json();
+  alert(d.message);
+}
+
+async function uploadFile(file, isSqlite) {
+  if (!file) return;
+  const fd = new FormData();
+  fd.append("file", file);
+  const r = await fetch("/api/upload",{method:"POST",body:fd});
+  const d = await r.json();
+  if (d.ok) {
+    const el = document.getElementById("uploadStatus");
+    if(el){el.style.display="block"; el.textContent="✓ " + d.message;}
+  } else {
+    alert("Upload failed: " + d.message);
+  }
+}
+
+function dragOver(e) { e.preventDefault(); document.getElementById("uploadArea").classList.add("drag-over"); }
+function dragLeave(e){ document.getElementById("uploadArea").classList.remove("drag-over"); }
+function dropFile(e) { e.preventDefault(); dragLeave(e); uploadFile(e.dataTransfer.files[0]); }
+
+// ── CHAT ────────────────────────────────────────────────
+function askQuestion(q) {
+  document.getElementById("chatInput").value = q;
+  sendMessage();
+}
+
+function handleKey(e) {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+function autoResize(el) {
+  el.style.height = "auto";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
+}
+
+function clearChat() {
+  document.getElementById("messages").innerHTML = "";
+  document.getElementById("suggestionsArea").style.display = "block";
+  currentData = null;
+  document.getElementById("resultsEmpty").style.display = "flex";
+  document.getElementById("resultsContent").style.display = "none";
+}
+
+async function sendMessage() {
+  const input = document.getElementById("chatInput");
+  const q = input.value.trim();
+  if (!q) return;
+
+  input.value = "";
+  input.style.height = "auto";
+  document.getElementById("sendBtn").disabled = true;
+  document.getElementById("suggestionsArea").style.display = "none";
+
+  // Add user bubble
+  appendMessage("user", q);
+
+  // Thinking indicator
+  const thinkId = "think_" + Date.now();
+  appendThinking(thinkId);
+
+  try {
+    const r = await fetch("/api/ask", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({question: q})
+    });
+    const d = await r.json();
+    removeElement(thinkId);
+
+    if (d.error) {
+      appendMessage("error", d.error, d.sql, d.is_pii_block);
+    } else if (d.is_conversational) {
+      // General question — just show text, no chart/table
+      appendMessage("ai", d.insight, "");
+      // Don't update results panel for conversational responses
+    } else {
+      appendMessage("ai", d.insight, d.sql);
+      renderResults(d);
+    }
+  } catch(e) {
+    removeElement(thinkId);
+    appendMessage("error", "Network error: " + e.message);
+  }
+
+  document.getElementById("sendBtn").disabled = false;
+  scrollMessages();
+}
+
+function appendMessage(type, text, sql, isPii) {
+  const msgs = document.getElementById("messages");
+  if (type === "user") {
+    msgs.innerHTML += `<div class="msg-user"><div class="msg-user-bubble">${escHtml(text)}</div></div>`;
+  } else if (type === "ai") {
+    let html = '<div class="msg-ai">';
+    if (sql) html += `<div class="sql-block">${escHtml(sql)}</div>`;
+    html += `<div class="insight-card">${mdToHtml(text)}</div></div>`;
+    msgs.innerHTML += html;
+  } else if (isPii) {
+    // PII block — amber warning card, no SQL shown
+    msgs.innerHTML += `<div class="msg-ai"><div class="pii-card">🔒 <strong>Privacy Protected</strong><br>${escHtml(text)}</div></div>`;
+  } else {
+    let html = '<div class="msg-ai">';
+    if (sql) html += `<div class="sql-block">${escHtml(sql)}</div>`;
+    html += `<div class="error-card">${escHtml(text)}</div></div>`;
+    msgs.innerHTML += html;
+  }
+  scrollMessages();
+}
+
+function appendThinking(id) {
+  document.getElementById("messages").innerHTML += `
+<div id="${id}" class="thinking">
+  <div class="thinking-dots"><span></span><span></span><span></span></div>
+  Analysing your data...
+</div>`;
+  scrollMessages();
+}
+
+function removeElement(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function scrollMessages() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+// ── HELPERS ──────────────────────────────────────────────
+
+function fmtLabel(s) {
+  return String(s)
+    .replace(/_/g, " ")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+function smartNum(v) {
+  const n = parseFloat(v);
+  if (isNaN(n)) return v;
+  if (Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1) + "M";
+  if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1) + "K";
+  return Number.isInteger(n) ? n.toLocaleString() : n.toFixed(1);
+}
+
+// Convert YYYY-MM or YYYY-MM-DD to ["Mon", "YYYY"] for clean axis labels
+function fmtDateLabel(s) {
+  const str = String(s).trim();
+  // YYYY-MM format (e.g. "2024-06")
+  const ym = str.match(/^(\d{4})-(\d{2})$/);
+  if (ym) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const mon = months[parseInt(ym[2]) - 1] || ym[2];
+    return [mon, ym[1]]; // two-line: ["Jun", "2024"]
+  }
+  // YYYY-MM-DD format
+  const ymd = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (ymd) {
+    const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+    const mon = months[parseInt(ymd[2]) - 1] || ymd[2];
+    return [`${mon} ${ymd[3]}`, ymd[1]];
+  }
+  // Q1 2024, Q2-2024 style
+  const q = str.match(/^Q(\d)[- ](\d{4})$/i);
+  if (q) return [`Q${q[1]}`, q[2]];
+  // Default: wrap long labels at word boundaries
+  if (str.length > 12) {
+    const words = str.split(/[\s_]+/);
+    const lines = [];
+    let line = "";
+    for (const w of words) {
+      if ((line + " " + w).trim().length > 11 && line.length > 0) {
+        lines.push(line.trim()); line = w;
+      } else {
+        line = (line + " " + w).trim();
+      }
+    }
+    if (line) lines.push(line.trim());
+    return lines;
+  }
+  return str;
+}
+
+// Detect if a column looks like dates (YYYY-MM, YYYY-MM-DD, etc.)
+function isDateCol(colIdx, rows) {
+  const sample = rows.slice(0, 3).map(r => String(r[colIdx] || ""));
+  return sample.every(v => /^\d{4}-\d{2}/.test(v) || /^Q\d[- ]\d{4}$/i.test(v));
+}
+
+// Convert markdown bold (**text**) to HTML <strong>
+function mdToHtml(text) {
+  return String(text)
+    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/g, "<em>$1</em>")
+    .replace(/\n/g, "<br>");
+}
+
+const COLORS = ["#c96442","#2d8a5e","#3b82f6","#d97706","#7c3aed","#be185d","#0891b2","#65a30d"];
+
+// ── RESULTS ──────────────────────────────────────────────
+function renderResults(d) {
+  currentData = d;
+  document.getElementById("resultsEmpty").style.display = "none";
+  document.getElementById("resultsContent").style.display = "flex";
+
+  const colsPreview = d.columns.slice(0, 5).map(fmtLabel).join(", ") + (d.columns.length > 5 ? "…" : "");
+  document.getElementById("statsRow").innerHTML = `
+    <div class="stat-card"><div class="stat-num">${d.total_rows.toLocaleString()}</div><div class="stat-lbl">Rows</div></div>
+    <div class="stat-card"><div class="stat-num">${d.columns.length}</div><div class="stat-lbl">Cols</div></div>
+    <div class="stat-cols-card"><div class="stat-cols-lbl">Columns</div><div class="stat-cols-val">${colsPreview}</div></div>`;
+
+  // Smart default: if ≤15 rows show All, else default to 15
+  const topNWrap = document.getElementById("topNWrap");
+  if (d.total_rows > 5) {
+    topNWrap.style.display = "flex";
+    document.querySelectorAll(".topn-btn").forEach(b => b.classList.remove("active"));
+    if (d.total_rows <= 15) {
+      currentTopN = 9999;
+      const allBtn = [...document.querySelectorAll(".topn-btn")].find(b => b.textContent === "All");
+      if (allBtn) allBtn.classList.add("active");
+    } else {
+      currentTopN = 15;
+      const btn15 = [...document.querySelectorAll(".topn-btn")].find(b => b.textContent === "15");
+      if (btn15) btn15.classList.add("active");
+    }
+  } else {
+    topNWrap.style.display = "none";
+    currentTopN = 9999;
+  }
+
+  renderChart(currentType);
+  renderTable(d);
+}
+
+function renderTable(d) {
+  // Headers always Title Case
+  let html = `<thead><tr>${d.columns.map(c => `<th>${escHtml(fmtLabel(c))}</th>`).join("")}</tr></thead><tbody>`;
+  d.rows.forEach(r => { html += `<tr>${r.map(c => `<td>${escHtml(c)}</td>`).join("")}</tr>`; });
+  html += "</tbody>";
+  document.getElementById("dataTable").innerHTML = html;
+}
+
+function renderChart(type) {
+  if (!currentData) return;
+  const d = currentData;
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  // ── Detect column types by sampling up to 5 rows ──────
+  function isNumericCol(colIdx) {
+    const sample = d.rows.slice(0, 5).map(r => r[colIdx]).filter(v => v !== "" && v !== null);
+    return sample.length > 0 && sample.every(v => !isNaN(parseFloat(v)));
+  }
+
+  const numIdxs = d.columns.map((_,i) => i).filter(i => isNumericCol(i));
+  const catIdxs = d.columns.map((_,i) => i).filter(i => !isNumericCol(i));
+
+  // X = first categorical, Y = first numeric
+  const xIdx = catIdxs.length > 0 ? catIdxs[0] : 0;
+  const yIdx = numIdxs.length > 0 ? numIdxs[0] : (d.columns.length > 1 ? 1 : 0);
+
+  // Detect if X column contains dates/months (time series)
+  const xIsDate = d.rows.length > 0 && isDateCol(xIdx, d.rows);
+
+  // Apply Top N limit
+  const BAR_LIMIT = currentTopN;
+  const PIE_LIMIT = currentTopN === 9999 ? 9999 : Math.min(currentTopN, 12);
+  const isPie     = type === "pie" || type === "doughnut";
+  const isLine    = type === "line";
+  const LIMIT     = isPie ? PIE_LIMIT : BAR_LIMIT;
+
+  let chartRows = d.rows;
+  let labels, values;
+
+  if (d.rows.length > LIMIT) {
+    if (xIsDate || isLine) {
+      // Time series: keep original order, just slice to LIMIT most recent
+      chartRows = d.rows.slice(0, LIMIT);
+    } else if (isPie && d.rows.length > LIMIT) {
+      const sorted  = [...d.rows].sort((a,b) => (parseFloat(b[yIdx])||0) - (parseFloat(a[yIdx])||0));
+      const topRows = sorted.slice(0, LIMIT);
+      const rest    = sorted.slice(LIMIT);
+      const othersVal = rest.reduce((s,r) => s + (parseFloat(r[yIdx])||0), 0);
+      labels = [...topRows.map(r => r[xIdx]), "Others"];
+      values = [...topRows.map(r => parseFloat(r[yIdx])||0), othersVal];
+    } else {
+      // Bar: sort by value descending, take top N
+      chartRows = [...d.rows]
+        .sort((a,b) => (parseFloat(b[yIdx])||0) - (parseFloat(a[yIdx])||0))
+        .slice(0, LIMIT);
+    }
+  }
+
+  // Build labels/values if not already set by pie branch
+  if (!labels) {
+    labels = chartRows.map(r => r[xIdx]);
+    values = chartRows.map(r => parseFloat(r[yIdx]) || 0);
+  }
+
+  const xLabel    = fmtLabel(d.columns[xIdx]);
+  const yLabel    = fmtLabel(d.columns[yIdx]);
+  const totalRows = d.rows.length;
+
+  // Show a note if we trimmed the data
+  const noteEl = document.getElementById("chartNote");
+  if (noteEl) {
+    if (totalRows > LIMIT && currentTopN !== 9999) {
+      const shown = isPie ? Math.min(PIE_LIMIT, totalRows) : Math.min(BAR_LIMIT, totalRows);
+      const msg = isPie
+        ? `Showing top ${shown} slices + Others (${totalRows} total) — see Table tab for all data`
+        : `Showing top ${shown} of ${totalRows} rows by ${yLabel} — see Table tab for all data`;
+      noteEl.textContent = msg;
+      noteEl.style.display = "block";
+    } else {
+      noteEl.style.display = "none";
+    }
+  }
+
+  const ctx    = document.getElementById("myChart").getContext("2d");
+  const maxVal = Math.max(...values) || 1;
+
+  const PIE_COLORS = ["#c96442","#2d8a5e","#3b82f6","#d97706","#7c3aed","#be185d","#0891b2","#65a30d"];
+  const showLabels = true;
+
+  chartInstance = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        label: yLabel,
+        data: values,
+        backgroundColor: isPie
+          ? [...PIE_COLORS.slice(0, labels.length - 1), labels[labels.length-1] === "Others" ? "#c8c5bf" : PIE_COLORS[labels.length-1] || "#c8c5bf"]
+          : (isLine ? COLORS[0] + "22" : COLORS[0] + "bb"),
+        borderColor:     isPie ? "#fff" : COLORS[0],
+        borderWidth:     isPie ? 2 : (isLine ? 2.5 : 0),
+        borderRadius:    type === "bar" ? 3 : 0,
+        // Line chart specific
+        tension:         isLine ? 0.35 : undefined,
+        fill:            isLine ? true  : undefined,
+        pointRadius:     isLine ? 4     : undefined,
+        pointHoverRadius: isLine ? 6    : undefined,
+        pointBackgroundColor: isLine ? COLORS[0] : undefined,
+        pointBorderColor:     isLine ? "#fff"    : undefined,
+        pointBorderWidth:     isLine ? 2         : undefined,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: {
+        padding: {
+          top:    isPie ? 10 : (labels.length <= 10 ? 28 : 12),
+          right:  isPie ? 0 : 16,
+          bottom: 8,
+          left:   8,
+        }
+      },
+      plugins: {
+        legend: {
+          display: isPie,
+          position: "right",
+          labels: {
+            font: { family:"Inter", size:11 },
+            color: "#4a4a4a",
+            boxWidth: 13,
+            boxHeight: 13,
+            padding: 10,
+            usePointStyle: true,
+            pointStyle: "rectRounded",
+            generateLabels: chart => {
+              const data   = chart.data;
+              const totals = data.datasets[0].data.reduce((a,b) => a + b, 0);
+              return data.labels.map((lbl, i) => {
+                const val = data.datasets[0].data[i];
+                const pct = totals > 0 ? ((val / totals) * 100).toFixed(1) : 0;
+                const bg  = data.datasets[0].backgroundColor[i] || "#ccc";
+                // Truncate long labels
+                const shortLbl = String(lbl).length > 16 ? String(lbl).slice(0,14) + "…" : lbl;
+                return {
+                  text:        `${shortLbl}  ${smartNum(val)} (${pct}%)`,
+                  fillStyle:   bg,
+                  strokeStyle: bg,
+                  lineWidth:   0,
+                  hidden:      false,
+                  index:       i,
+                };
+              });
+            }
+          }
+        },
+        tooltip: {
+          backgroundColor: "#fff",
+          titleColor: "#1a1a1a",
+          bodyColor: "#4a4a4a",
+          borderColor: "#e0ddd8",
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => {
+              const val = item.parsed.y ?? item.parsed;
+              return `  ${yLabel}: ${smartNum(val)}`;
+            }
+          }
+        },
+        datalabels: {
+          display: (ctx) => {
+            if (isPie) return true;
+            if (isLine) return labels.length <= 20; // line: show if not too crowded
+            return ctx.dataset.data[ctx.dataIndex] > 0;
+          },
+          color: (ctx) => {
+            if (isPie)  return "#fff";
+            if (isLine) return "#3a3a3a";
+            return labels.length > 10 ? "#fff" : "#3a3a3a";
+          },
+          font: {
+            family: "Inter",
+            size:   isPie ? 11 : (labels.length > 20 ? 9 : 10),
+            weight: "600"
+          },
+          formatter: val => smartNum(val),
+          anchor: isPie ? "center" : (isLine ? "end" : (labels.length > 10 ? "center" : "end")),
+          align:  isPie ? "center" : (isLine ? "top" : (labels.length > 10 ? "center" : "top")),
+          offset: isPie ? 0 : (isLine ? 4 : (labels.length > 10 ? 0 : 3)),
+          rotation: (!isPie && !isLine && labels.length > 10) ? -90 : 0,
+          clamp: true,
+          display: (ctx) => {
+            if (isPie)  return true;
+            if (isLine) return labels.length <= 20 && ctx.dataset.data[ctx.dataIndex] > 0;
+            if (labels.length <= 10) return ctx.dataset.data[ctx.dataIndex] > 0;
+            const val = ctx.dataset.data[ctx.dataIndex];
+            return val > 0 && val >= maxVal * 0.08;
+          },
+        },
+      },
+      scales: isPie ? {} : {
+        x: {
+          grid: { color: "#f5f4f2", drawBorder: false },
+          border: { display: false },
+          ticks: {
+            font: { family:"Inter", size:11 },
+            color: "#888",
+            maxRotation: 0,
+            autoSkip: true,
+            maxTicksLimit: 20,
+            callback: function(val, idx) {
+              const lbl = this.getLabelForValue(val);
+              if (!lbl) return lbl;
+              return fmtDateLabel(lbl);
+            }
+          },
+          title: {
+            display: true,
+            text: xLabel,
+            color: "#c96442",
+            font: { family:"Inter", size:12, weight:"600" },
+            padding: { top: 8 }
+          }
+        },
+        y: {
+          grid: { color: "#f5f4f2", drawBorder: false },
+          border: { display: false },
+          max: maxVal * (isLine ? 1.3 : (labels.length <= 10 ? 1.25 : 1.05)),
+          min: 0,
+          ticks: {
+            font: { family:"Inter", size:10 },
+            color: "#999",
+            callback: v => smartNum(v)
+          },
+          title: {
+            display: true,
+            text: yLabel,
+            color: "#c96442",
+            font: { family:"Inter", size:12, weight:"600" },
+            padding: { bottom: 8 }
+          }
+        },
+      },
+      animation: { duration: 350 },
+    },
+    plugins: [ChartDataLabels],
+  });
+}
+
+function setTopN(n, btn) {
+  currentTopN = n;
+  document.querySelectorAll(".topn-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderChart(currentType);
+}
+
+function setChart(type, btn) {
+  currentType = type;
+  document.querySelectorAll(".chart-type-btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderChart(type);
+}
+
+// ── TABS ─────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+  el.classList.add("active");
+  document.getElementById("tab"+name.charAt(0).toUpperCase()+name.slice(1)).classList.add("active");
+  if (name==="chart" && currentData) renderChart(currentType);
+}
+
+// ── EXPORTS ───────────────────────────────────────────────
+function _makeSlug(text) {
+  // Convert question/insight to a clean filename slug
+  // e.g. "Top 5 delay reasons this year" → "top_5_delay_reasons"
+  return (text || "analysis")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")   // remove special chars
+    .trim()
+    .replace(/\s+/g, "_")           // spaces to underscores
+    .replace(/_+/g, "_")            // collapse multiple underscores
+    .slice(0, 40);                  // max 40 chars
+}
+
+function _getExportTitle() {
+  // Use last user question as the filename basis
+  const msgs = document.getElementById("messages");
+  const bubbles = msgs ? msgs.querySelectorAll(".msg-user-bubble") : [];
+  if (bubbles.length > 0) {
+    return bubbles[bubbles.length - 1].textContent.trim();
+  }
+  return "aeroanalytics_export";
+}
+
+async function downloadCSV() {
+  const slug = _makeSlug(_getExportTitle());
+  const filename = `${slug}.csv`;
+  try {
+    const resp = await fetch("/api/export/csv");
+    if (!resp.ok) {
+      const d = await resp.json().catch(() => ({}));
+      alert(d.error || "No data to export. Please run a query first.");
+      return;
+    }
+    const blob = await resp.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) { alert("Export failed: " + e.message); }
+}
+
+async function downloadPDF() {
+  const slug     = _makeSlug(_getExportTitle());
+  const filename = `${slug}_report.pdf`;
+
+  // Capture chart at 3x resolution for crisp PDF rendering
+  let chartImage = null;
+  const canvas = document.getElementById("myChart");
+  if (canvas) {
+    try {
+      const scale  = 3;
+      const hiCanvas = document.createElement("canvas");
+      hiCanvas.width  = canvas.width  * scale;
+      hiCanvas.height = canvas.height * scale;
+      const ctx = hiCanvas.getContext("2d");
+      ctx.scale(scale, scale);
+      // White background — essential for clean PDF (canvas is transparent by default)
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(canvas, 0, 0);
+      chartImage = hiCanvas.toDataURL("image/png", 1.0);
+    } catch(e) {
+      try { chartImage = canvas.toDataURL("image/png"); } catch(e2) {}
+    }
+  }
+
+  try {
+    const resp = await fetch("/api/export/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chart_image: chartImage })
+    });
+    if (!resp.ok) {
+      const d = await resp.json().catch(() => ({}));
+      alert(d.error || "No data to export. Please run a query first.");
+      return;
+    }
+    const blob = await resp.blob();
+    if (!blob || blob.size < 200) {
+      alert("PDF generation failed. Please try again."); return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) { alert("Export failed: " + e.message); }
+}
+async function exitApp() {
+  if (!confirm("Stop the app and close?")) return;
+  await fetch("/api/exit", {method:"POST"});
+  document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Inter,sans-serif;color:#888;flex-direction:column;gap:12px;"><div style="font-size:32px;">✈</div><div style="font-size:16px;font-weight:600;color:#1a1a1a;">App stopped.</div><div style="font-size:13px;">You can close this tab.</div></div>`;
+}
+
+// ── HEARTBEAT — tell server the tab is still open ─────────
+// Sends a ping every 30 seconds so the server knows the browser is alive
+// Server shuts down after 10 min of no pings (tab closed / browser crash)
+// NOTE: No beforeunload handler — it would fire on logout redirect too
+function startHeartbeat() {
+  setInterval(() => {
+    fetch("/api/heartbeat", { method: "POST" }).catch(() => {});
+  }, 30000);
+}
+
+startHeartbeat();
+</script>
+</body>
+</html>

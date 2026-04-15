@@ -1,0 +1,78 @@
+name: Deploy to AWS Elastic Beanstalk
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: ap-southeast-1
+  EB_APPLICATION: aeroanalytics
+  EB_ENVIRONMENT: aeroanalytics-prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Validate imports
+        run: |
+          pip install -r requirements.txt
+          python -c "
+          import sys; sys.path.insert(0,'.')
+          from agents.sql_agent import SQLAgent
+          from agents.insight_agent import InsightAgent
+          from connectors.router import get_connector
+          from utils.llm_provider import build_llm
+          print('All imports OK')
+          "
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Create deployment ZIP
+        run: |
+          zip -r deploy.zip . \
+            --exclude "*.git*" \
+            --exclude "venv/*" \
+            --exclude "__pycache__/*" \
+            --exclude "*.pyc" \
+            --exclude ".env" \
+            --exclude "*.db" \
+            --exclude "tests/*"
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          VERSION="v-$(echo ${{ github.sha }} | cut -c1-8)-$(date +%Y%m%d%H%M%S)"
+          BUCKET="elasticbeanstalk-${{ env.AWS_REGION }}-${{ secrets.AWS_ACCOUNT_ID }}"
+
+          aws s3 cp deploy.zip s3://$BUCKET/aeroanalytics/$VERSION.zip
+
+          aws elasticbeanstalk create-application-version \
+            --application-name ${{ env.EB_APPLICATION }} \
+            --version-label "$VERSION" \
+            --source-bundle S3Bucket="$BUCKET",S3Key="aeroanalytics/$VERSION.zip"
+
+          aws elasticbeanstalk update-environment \
+            --application-name ${{ env.EB_APPLICATION }} \
+            --environment-name ${{ env.EB_ENVIRONMENT }} \
+            --version-label "$VERSION"
+
+          echo "Deployed: $VERSION"
+
+      - name: Wait and print URL
+        run: |
+          sleep 60
+          URL=$(aws elasticbeanstalk describe-environments \
+            --environment-names ${{ env.EB_ENVIRONMENT }} \
+            --query "Environments[0].CNAME" --output text)
+          echo "Live at: http://$URL"
