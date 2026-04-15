@@ -299,5 +299,4 @@ See **[DEPLOY.md](DEPLOY.md)** for the full EC2 step-by-step guide.
 ---
 
 ## License
-
-MIT © 2026 Shubham Sakhuja
+Shubham Sakhuja
