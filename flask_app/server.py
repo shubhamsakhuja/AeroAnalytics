@@ -21,7 +21,7 @@ from agents.insight_agent import InsightAgent
 from reports.generator import generate_report
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.secret_key = os.urandom(32)   # session encryption key
+app.secret_key = os.getenv('APP_SECRET_KEY', 'aeroanalytics-secret-2025')   # session encryption key
 CORS(app)
 
 # ── Load .env ─────────────────────────────────────────────────────────────────
@@ -258,18 +258,15 @@ def export_pdf():
 
 @app.route("/api/exit", methods=["POST"])
 def exit_app():
-    def shutdown():
-        time.sleep(0.5)
-        os._exit(0)
-    threading.Thread(target=shutdown).start()
-    return jsonify({"ok": True})
+    session.clear()
+    return jsonify({"ok": True, "redirect": "/login"})
 
 
 # ── Heartbeat & Watchdog ──────────────────────────────────────────────────────
 # Tracks when the browser last pinged (any page — including login page)
 _last_heartbeat = time.time()
-_TAB_CLOSE_TIMEOUT = 90     # seconds — if NO ping at all → tab was closed
-_INACTIVITY_TIMEOUT = 600   # 10 minutes of no heartbeat → shutdown
+_TAB_CLOSE_TIMEOUT = 999999     # seconds — if NO ping at all → tab was closed
+_INACTIVITY_TIMEOUT = 999999   # 10 minutes of no heartbeat → shutdown
 
 
 @app.route("/api/heartbeat", methods=["POST"])
