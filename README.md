@@ -147,7 +147,7 @@ run_flask.bat
 # ── App mode ─────────────────────────────────────────────
 APP_ENV=dev              # dev = no login | prod = login required
 APP_USERNAME=admin
-APP_PASSWORD=aero2025
+APP_PASSWORD=aero2026
 
 # ── AWS Bedrock ───────────────────────────────────────────
 LLM_PROVIDER=bedrock
