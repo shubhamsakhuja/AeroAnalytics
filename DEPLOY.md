@@ -1,4 +1,4 @@
-# AeroAnalytics — Deployment Guide
+**# AeroAnalytics — Deployment Guide
 # ==================================
 # Deploy to AWS EC2 (Ubuntu, Gunicorn, systemd)
 # Estimated time: 45 minutes | Free for 12 months (t2.micro)
@@ -313,3 +313,4 @@ sudo systemctl start aeroanalytics
 #  - Permanent Elastic IP for consistent access
 #  - PROD mode requires username/password login
 #  Full source code on GitHub, live demo available on request."
+******
